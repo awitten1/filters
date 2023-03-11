@@ -1,3 +1,3 @@
-[submodule "cityhash"]
-	path = cityhash
+[submodule "src/third_party/cityhash"]
+	path = src/third_party/cityhash
 	url = git@github.com:google/cityhash.git

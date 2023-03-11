@@ -1,8 +1,10 @@
 
 
+#include <_types/_uint64_t.h>
 #include <_types/_uint8_t.h>
 #include <algorithm>
 #include <sys/_types/_size_t.h>
+#include <type_traits>
 #include <vector>
 #include <string>
 #include <cmath>
@@ -13,29 +15,25 @@
 namespace bf {
 
 template<typename T>
-struct BufferRetriever;
+struct hash;
 
 template<>
-struct BufferRetriever<std::string> {
-    const char* getBuffer(const std::string& x) {
-        return x.data();
-    }
-    int getBufferSize(const std::string& x) {
-        return x.size();
+struct hash<std::string> {
+    uint64_t operator()(const std::string& key, int seed) {
+        return CityHash64WithSeed(key.c_str(),
+                key.size(), seed);
     }
 };
 
 template<>
-struct BufferRetriever<int> {
-    const char* getBuffer(const int& x) {
-        return (const char*)&x;
-    }
-    int getBufferSize(const int& x) {
-        return sizeof(int);
+struct hash<int> {
+    uint64_t operator()(int key, int seed) {
+        return CityHash64WithSeed(reinterpret_cast<const char*>(&key),
+                sizeof(key), seed);
     }
 };
 
-template<typename Key>
+template<typename Key, typename Hash = hash<Key>>
 class bloom_filter {
 public:
 
@@ -44,17 +42,17 @@ public:
               _k{_getNumHashFunctions(n, _bits.size())} { }
 
     void insert(const Key& key) {
+        Hash hasher;
         for (uint8_t i = 0; i < _k; ++i) {
-            uint64_t idx = CityHash64WithSeed(_bufferRetriever.getBuffer(key),
-                _bufferRetriever.getBufferSize(key), i);
+            auto idx = hasher(key, i);
             _bits[idx % _bits.size()] = true;
         }
     }
 
     bool query(const Key& key) {
+        Hash hasher;
         for (uint8_t i = 0; i < _k; ++i) {
-            uint64_t idx = CityHash64WithSeed(_bufferRetriever.getBuffer(key),
-                _bufferRetriever.getBufferSize(key), i);
+            auto idx = hasher(key, i);
             if (!_bits[idx % _bits.size()]) {
                 return false;
             }
@@ -86,7 +84,6 @@ private:
 
     std::vector<bool> _bits;
     uint8_t _k;
-    BufferRetriever<Key> _bufferRetriever;
 };
 
 }
