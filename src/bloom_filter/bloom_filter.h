@@ -10,7 +10,7 @@
 #include <cmath>
 #include <iostream>
 
-#include "cityhash/src/city.h"
+#include "third_party/cityhash/src/city.h"
 
 namespace bf {
 
@@ -37,6 +37,7 @@ template<typename Key, typename Hash = hash<Key>>
 class bloom_filter {
 public:
 
+    // Use optimal values of k and m.
     explicit bloom_filter(double precision, uint32_t n)
             : _bits(_getArraySize(precision, n)),
               _k{_getNumHashFunctions(n, _bits.size())} { }
@@ -69,6 +70,8 @@ public:
     }
 
 private:
+    // Optimal formula:
+    // https://en.wikipedia.org/wiki/Bloom_filter#Optimal_number_of_hash_functions
     static size_t _getArraySize(double precision, uint32_t numKeys) {
         auto x = (numKeys * std::log(precision)
             / std::pow(std::log(2), 2)) * -1;
