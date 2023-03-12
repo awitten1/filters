@@ -23,6 +23,8 @@ struct bloom_filter_options {
 
 template<typename Key, typename Hash = filters::hash<Key>>
 class bloom_filter {
+    static_assert(std::is_default_constructible_v<Hash>, "Cannot instantiate hasher.");
+
 public:
     // Use optimal values of k and m.
     explicit bloom_filter(bloom_filter_options opts)
