@@ -10,7 +10,7 @@
 #include <cmath>
 #include <iostream>
 
-#include "third_party/cityhash/src/city.h"
+#include "hash/city.h"
 
 namespace bf {
 
@@ -33,7 +33,7 @@ struct hash<int> {
     }
 };
 
-template<typename Key, typename Hash = hash<Key>>
+template<typename Key, typename Hash = bf::hash<Key>>
 class bloom_filter {
 public:
 
