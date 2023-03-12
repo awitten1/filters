@@ -12,7 +12,7 @@
 
 #include "hash/city.h"
 
-namespace bf {
+namespace filters {
 
 template<typename T>
 struct hash;
@@ -33,7 +33,7 @@ struct hash<int> {
     }
 };
 
-template<typename Key, typename Hash = bf::hash<Key>>
+template<typename Key, typename Hash = filters::hash<Key>>
 class bloom_filter {
 public:
 
