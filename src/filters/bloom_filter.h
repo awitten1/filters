@@ -11,36 +11,23 @@
 #include <iostream>
 
 #include "hash/city.h"
+#include "hash/hash.h"
+
 
 namespace filters {
 
-template<typename T>
-struct hash;
-
-template<>
-struct hash<std::string> {
-    uint64_t operator()(const std::string& key, int seed) {
-        return CityHash64WithSeed(key.c_str(),
-                key.size(), seed);
-    }
-};
-
-template<>
-struct hash<int> {
-    uint64_t operator()(int key, int seed) {
-        return CityHash64WithSeed(reinterpret_cast<const char*>(&key),
-                sizeof(key), seed);
-    }
+struct bloom_filter_options {
+    uint8_t numHashFunctions;
+    size_t numBits;
 };
 
 template<typename Key, typename Hash = filters::hash<Key>>
 class bloom_filter {
 public:
-
     // Use optimal values of k and m.
-    explicit bloom_filter(double precision, uint32_t n)
-            : _bits(_getArraySize(precision, n)),
-              _k{_getNumHashFunctions(n, _bits.size())} { }
+    explicit bloom_filter(bloom_filter_options opts)
+            : _bits(opts.numBits),
+              _k{opts.numHashFunctions} { }
 
     void insert(const Key& key) {
         Hash hasher;
@@ -70,24 +57,19 @@ public:
     }
 
 private:
-    // Optimal formula:
-    // https://en.wikipedia.org/wiki/Bloom_filter#Optimal_number_of_hash_functions
-    static size_t _getArraySize(double precision, uint32_t numKeys) {
-        auto x = (numKeys * std::log(precision)
-            / std::pow(std::log(2), 2)) * -1;
-
-        return static_cast<size_t>(x);
-    }
-
-    static uint8_t _getNumHashFunctions(uint32_t numKeys, uint32_t numBits) {
-        auto x = numBits * std::log(2) / numKeys;
-
-        return std::ceil(x);
-    }
-
     std::vector<bool> _bits;
     uint8_t _k;
 };
+
+// Optimal formula:
+// https://en.wikipedia.org/wiki/Bloom_filter#Optimal_number_of_hash_functions
+static bloom_filter_options getOptimalBloomFilterOptions(double precision, uint32_t numKeys) {
+    auto x = (numKeys * std::log(precision)
+            / std::pow(std::log(2), 2)) * -1;
+    auto numBits = static_cast<size_t>(x);
+    uint8_t numHashFunctions = std::ceil(numBits * std::log(2) / numKeys);
+    return {numHashFunctions, numBits};
+}
 
 }
 
