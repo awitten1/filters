@@ -33,17 +33,15 @@ public:
         _k{k} {}
 
     void insert(const Key& key) {
-        Hash hasher;
         for (uint8_t i = 0; i < _k; ++i) {
-            auto idx = hasher(key, i);
+            auto idx = _hasher(key, i);
             _bits[idx % _bits.size()] = true;
         }
     }
 
     bool query(const Key& key) {
-        Hash hasher;
         for (uint8_t i = 0; i < _k; ++i) {
-            auto idx = hasher(key, i);
+            auto idx = _hasher(key, i);
             if (!_bits[idx % _bits.size()]) {
                 return false;
             }
@@ -60,7 +58,7 @@ public:
     }
 
 private:
-    Hash hasher;
+    Hash _hasher;
     Container _bits;
     uint8_t _k;
 };
